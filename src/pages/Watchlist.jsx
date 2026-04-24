@@ -210,11 +210,11 @@ export default function Watchlist() {
           </div>
 
           {/* Search / Add stocks */}
-          <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
+          <div className="relative z-20 glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Add Stocks</h2>
 
             {/* Wrapper — position:relative, NO overflow:hidden */}
-            <div className="relative" ref={searchRef}>
+            <div className="relative z-20" ref={searchRef}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 <input
@@ -278,7 +278,7 @@ export default function Watchlist() {
           </div>
 
           {/* Watchlist grid */}
-          <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
+          <div className="relative z-10 glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg sm:text-xl font-semibold">
                 Your Stocks ({watchlist.length})
