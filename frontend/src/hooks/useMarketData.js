@@ -9,7 +9,7 @@ export function isMarketOpen() {
   const day  = ist.getUTCDay();
   if (day === 0 || day === 6) return false;
   const m = ist.getUTCHours() * 60 + ist.getUTCMinutes();
-  return m >= 555 && m <= 930;
+  return m >= 225 && m <= 600;  // 3:45 AM - 10:00 AM UTC = 9:15 AM - 3:30 PM IST
 }
 
 const OPEN = isMarketOpen();
