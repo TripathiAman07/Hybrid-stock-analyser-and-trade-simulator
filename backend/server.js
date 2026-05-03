@@ -1,23 +1,35 @@
-// server.js — Quantyx v4
+// server.js — Quantyx v4 + Authentication
 // NSE-only proxy. All symbols normalized to SYMBOL.NS.
 // Uses raw chart endpoint for NSE data — no Yahoo Finance library/SDK.
+// Production-ready with JWT authentication, MongoDB, and Bcrypt
 // Run: node server.js
 
 import express from "express";
 import cors    from "cors";
+import dotenv from "dotenv";
+import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
+// Load environment variables
+dotenv.config();
+
+const PORT = process.env.PORT || 3001;
 const app  = express();
-const PORT = 3001;
 const NSE_BASE = "https://query2.finance.yahoo.com";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36";
 
 app.use(cors({
   origin: (origin, cb) =>
-    (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin))
+    (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || origin === process.env.FRONTEND_URL)
       ? cb(null, true)
       : cb(new Error("CORS: origin not allowed")),
+  credentials: true,
 }));
 app.use(express.json());
+
+// ── Routes: Authentication ────────────────────────────────────
+app.use("/api/auth", authRoutes);
 
 // ── Symbol normalizer (NSE only) ──────────────────────────────
 function normalizeSymbol(symbol) {
@@ -281,10 +293,36 @@ app.get("/api/heatmap", async (_req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n✅  Quantyx v4 NSE proxy → http://localhost:${PORT}`);
-  console.log(`    Test: http://localhost:${PORT}/api/quotes?symbols=RELIANCE\n`);
-});
+
+// Connect to MongoDB, clean up old indexes, then start the server
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    const User = (await import("./models/User.js")).default;
+    const indexes = await User.collection.indexes();
+    const hasLegacyUsernameIndex = indexes.some((index) => index.name === "username_1");
+
+    if (hasLegacyUsernameIndex) {
+      await User.collection.dropIndex("username_1");
+      console.log("✅ Removed stale username_1 index from users collection");
+    }
+
+    app.listen(PORT, () => {
+      console.log(`\n✅  Quantyx v4 NSE proxy + Auth → http://localhost:${PORT}`);
+      console.log(`    Test: http://localhost:${PORT}/api/quotes?symbols=RELIANCE\n`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// ── Error Handling Middleware ────────────────────────────────
+// Must be last
+app.use(errorHandler);
 
 process.on("uncaughtException",  (e) => console.error("Uncaught:", e.message));
 process.on("unhandledRejection", (e) => console.error("Unhandled:", e));
