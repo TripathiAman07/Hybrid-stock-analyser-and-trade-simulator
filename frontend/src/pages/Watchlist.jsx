@@ -228,9 +228,9 @@ export default function Watchlist() {
                 />
               </div>
 
-              {/* Dropdown — fixed solid background, high z-index */}
+              {/* Dropdown — render in normal flow so it does not overlap stock cards */}
               {showSuggestions && debouncedSearch.trim() && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-[#0b0f14] border border-white/10 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto">
+                <div className="w-full mt-2 bg-[#0b0f14] border border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
                   {suggestions.length > 0 ? (
                     suggestions.map((stock) => {
                       const inList = isInWatchlist(stock.symbol);
